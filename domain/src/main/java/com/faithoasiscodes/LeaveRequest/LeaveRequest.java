@@ -18,10 +18,6 @@ public class LeaveRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "employee_id")
-    private Employee employee;
-
     private LocalDate startDate;
     private LocalDate endDate;
 
@@ -34,16 +30,7 @@ public class LeaveRequest {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        status = LeaveStatus.PENDING;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
+    @ManyToOne
+    @JoinColumn(name = "employee_id")
+    private Employee employee;
 }

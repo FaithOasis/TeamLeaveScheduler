@@ -1,21 +1,21 @@
 package com.faithoasiscodes.PublicHoliday;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "public_holiday")
+@Table(name = "public_holidays")
 @Getter
 @Setter
 @NoArgsConstructor
 public class PublicHoliday {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
     private LocalDate date;
 
     private String name;

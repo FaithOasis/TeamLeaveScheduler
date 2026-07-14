@@ -8,11 +8,12 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+
+@Entity
+@Table(name="employees")
 @Getter
 @Setter
 @NoArgsConstructor
-@Entity
-@Table(name="employees")
 public class Employee {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
@@ -21,9 +22,11 @@ public class Employee {
     private String name;
     private int leaveBalance;
 
-    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
-    private List<LeaveRequest> leaveRequests = new ArrayList<>();
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Team team;
+
+    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
+    private List<LeaveRequest> leaveRequests = new ArrayList<>();
+
 }
