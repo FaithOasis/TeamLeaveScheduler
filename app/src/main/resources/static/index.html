@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Team Leave Scheduler</title>
+    <style>
+        :root {
+          --border: #d7dbe0;
+          --bg: #f7f8fa;
+          --text: #1f2430;
+          --muted: #6b7280;
+          --weekend: #eef0f3;
+          --holiday: #fdf1d6;
+          --holiday-text: #92620a;
+          --approve: #1a7f37;
+          --reject: #c0392b;
+          --pending: #b58900;
+          --eng: #3b6fd1;
+          --ops: #d1663b;
+          --fin: #4f9d69;
+        }
+        * { box-sizing: border-box; }
+        body {
+          margin: 0;
+          font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+          background: var(--bg);
+          color: var(--text);
+        }
+        header {
+          padding: 16px 24px;
+          border-bottom: 1px solid var(--border);
+          background: #fff;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        header h1 { font-size: 18px; margin: 0; }
+        main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+        section { margin-bottom: 32px; }
+        h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 12px; }
+
+        /* Calendar grid */
+        .cal-grid {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 6px;
+        }
+        .cal-day {
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          background: #fff;
+          min-height: 92px;
+          padding: 6px;
+          font-size: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .cal-day.weekend { background: var(--weekend); }
+        .cal-day.holiday { background: var(--holiday); }
+        .cal-date { font-weight: 600; color: var(--muted); }
+        .cal-date .holiday-label { display: block; font-weight: 400; color: var(--holiday-text); font-size: 11px; }
+        .leave-chip {
+          border-radius: 4px;
+          padding: 2px 5px;
+          color: #fff;
+          font-size: 11px;
+          line-height: 1.3;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .team-ENGINEERING { background: var(--eng); }
+        .team-OPERATIONS  { background: var(--ops); }
+        .team-FINANCE     { background: var(--fin); }
+
+        .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
+        .legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+        /* Form */
+        form {
+          background: #fff;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 16px;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          align-items: end;
+        }
+        form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+        input, select, button {
+          font: inherit;
+          padding: 8px;
+          border: 1px solid var(--border);
+          border-radius: 5px;
+        }
+        form button {
+          background: var(--text);
+          color: #fff;
+          border: none;
+          cursor: pointer;
+        }
+        form button:hover { opacity: 0.9; }
+        #form-msg { grid-column: 1 / -1; font-size: 13px; }
+        #form-msg.error { color: var(--reject); }
+        #form-msg.ok { color: var(--approve); }
+
+        /* Pending list */
+        table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        th, td { text-align: left; padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
+        th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+        tr:last-child td { border-bottom: none; }
+        .actions button {
+          border: none;
+          border-radius: 4px;
+          color: #fff;
+          padding: 5px 10px;
+          cursor: pointer;
+          font-size: 12px;
+          margin-right: 6px;
+        }
+        .btn-approve { background: var(--approve); }
+        .btn-reject { background: var(--reject); }
+        .status-badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; color: #fff; }
+        .status-PENDING { background: var(--pending); }
+        .status-APPROVED { background: var(--approve); }
+        .status-REJECTED { background: var(--reject); }
+
+        .empty { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Team Leave Scheduler</h1>
+    <span id="today-label" style="color: var(--muted); font-size: 13px;"></span>
+</header>
+
+<main>
+
+    <section>
+        <h2>Next 30 days</h2>
+        <div id="calendar" class="cal-grid"></div>
+        <div class="legend">
+            <span><span class="swatch" style="background: var(--eng);"></span> Engineering</span>
+            <span><span class="swatch" style="background: var(--ops);"></span> Operations</span>
+            <span><span class="swatch" style="background: var(--fin);"></span> Finance</span>
+            <span><span class="swatch" style="background: var(--weekend);"></span> Weekend</span>
+            <span><span class="swatch" style="background: var(--holiday);"></span> Public holiday</span>
+        </div>
+    </section>
+
+    <section>
+        <h2>Submit a leave request</h2>
+        <form id="leave-form">
+            <label>Employee
+                <select id="employeeId" required></select>
+            </label>
+            <label>Start date
+                <input type="date" id="startDate" required>
+            </label>
+            <label>End date
+                <input type="date" id="endDate" required>
+            </label>
+            <label>Type
+                <select id="leaveType">
+                    <option value="ANNNUAL">Annual</option>
+                    <option value="SICK">Sick</option>
+                    <option value="MATERNAL">Maternal</option>
+                    <option value="PERSONAL">Personal</option>
+                    <option value="OTHER">Other</option>
+                </select>
+            </label>
+            <button type="submit">Submit request</button>
+            <div id="form-msg"></div>
+        </form>
+    </section>
+
+    <section>
+        <h2>Pending requests</h2>
+        <table>
+            <thead>
+            <tr><th>Employee</th><th>Team</th><th>Dates</th><th>Type</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="pending-body"></tbody>
+        </table>
+    </section>
+
+</main>
+
+<script>
+    /* ------------------------------------------------------------------
+       Matches com.faithoasiscodes.LeaveRequest.LeaveRequestController.
+       Note: /submit and /evaluate take query params, not a JSON body.
+       Each LeaveRequest returned by /pending and /approved carries its
+       own nested `employee` object, so no separate lookup is needed
+       for rendering (only the submit-form dropdown needs /employees).
+    ------------------------------------------------------------------- */
+    const API = {
+      employees: '/api/leaves/employees',
+      pending: '/api/leaves/pending',
+      approved: '/api/leaves/approved',
+      submit: '/api/leaves/submit',
+      evaluate: '/api/leaves/evaluate',
+    };
+
+    function fmtDate(d) {
+      return d.toISOString().slice(0, 10);
+    }
+
+    async function loadEmployees() {
+      const res = await fetch(API.employees);
+      const employees = await res.json();
+
+      const select = document.getElementById('employeeId');
+      select.innerHTML = employees
+        .map(e => `<option value="${e.id}">${e.name} (${e.team})</option>`)
+        .join('');
+    }
+
+    async function loadPending() {
+      const res = await fetch(API.pending);
+      return res.json();
+    }
+
+    async function loadApproved() {
+      const res = await fetch(API.approved);
+      return res.json();
+    }
+
+    function buildCalendarDays() {
+      const days = [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() + i);
+        days.push(d);
+      }
+      return days;
+    }
+
+    function renderCalendar(approved) {
+      const days = buildCalendarDays();
+      const grid = document.getElementById('calendar');
+      grid.innerHTML = '';
+
+      days.forEach(day => {
+        const iso = fmtDate(day);
+        const dow = day.getDay(); // 0 = Sun, 6 = Sat
+        const isWeekend = dow === 0 || dow === 6;
+
+        const cell = document.createElement('div');
+        cell.className = 'cal-day' + (isWeekend ? ' weekend' : '');
+
+        const dateLabel = document.createElement('div');
+        dateLabel.className = 'cal-date';
+        dateLabel.textContent = day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        cell.appendChild(dateLabel);
+
+        approved
+          .filter(r => iso >= r.startDate && iso <= r.endDate)
+          .forEach(r => {
+            const emp = r.employee || {};
+            const chip = document.createElement('div');
+            chip.className = 'leave-chip team-' + (emp.team || 'OTHER');
+            chip.textContent = emp.name || `Employee ${emp.id}`;
+            cell.appendChild(chip);
+          });
+
+        grid.appendChild(cell);
+      });
+    }
+
+    function renderPending(pending) {
+      const body = document.getElementById('pending-body');
+
+      if (pending.length === 0) {
+        body.innerHTML = `<tr><td colspan="6" class="empty">No pending requests</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = pending.map(r => {
+        const emp = r.employee || {};
+        return `
+          <tr data-id="${r.id}">
+            <td>${emp.name || '-'}</td>
+            <td>${emp.team || '-'}</td>
+            <td>${r.startDate} &rarr; ${r.endDate}</td>
+            <td>${r.type || '-'}</td>
+            <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+            <td class="actions">
+              <button class="btn-approve" data-action="approve" data-id="${r.id}">Approve</button>
+              <button class="btn-reject" data-action="reject" data-id="${r.id}">Reject</button>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    async function refreshAll() {
+      const [pending, approved] = await Promise.all([loadPending(), loadApproved()]);
+      renderCalendar(approved);
+      renderPending(pending);
+    }
+
+    document.getElementById('pending-body').addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const id = btn.dataset.id;
+      const decision = btn.dataset.action === 'approve' ? 'APPROVED' : 'REJECTED';
+      const params = new URLSearchParams({ requestId: id, decision });
+
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API.evaluate}?${params.toString()}`, { method: 'POST' });
+        if (!res.ok) throw new Error(await res.text());
+        await refreshAll();
+      } catch (err) {
+        alert('Action failed: ' + err.message);
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('leave-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('form-msg');
+      msg.textContent = '';
+      msg.className = '';
+
+      const params = new URLSearchParams({
+        employeeId: document.getElementById('employeeId').value,
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        type: document.getElementById('leaveType').value,
+      });
+
+      try {
+        const res = await fetch(`${API.submit}?${params.toString()}`, { method: 'POST' });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || `Request failed (${res.status})`);
+        }
+        msg.textContent = 'Request submitted.';
+        msg.className = 'ok';
+        e.target.reset();
+        await refreshAll();
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = 'error';
+      }
+    });
+
+    (async function init() {
+      document.getElementById('today-label').textContent =
+        'Today: ' + new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      await loadEmployees();
+      await refreshAll();
+    })();
+</script>
+
+</body>
+</html>

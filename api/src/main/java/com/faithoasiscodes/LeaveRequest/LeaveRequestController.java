@@ -2,6 +2,7 @@ package com.faithoasiscodes.LeaveRequest;
 
 
 import com.faithoasiscodes.Employee.Employee;
+import com.faithoasiscodes.Employee.Team;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,19 @@ public class LeaveRequestController {
 
     public LeaveRequestController(LeaveRequestService leaveRequestService) {
         this.leaveRequestService = leaveRequestService;
+    }
+
+    @PostMapping("/employees")
+    public ResponseEntity<?> addEmployee(
+            @RequestParam String name,
+            @RequestParam Team team,
+            @RequestParam(defaultValue = "20") int leaveBalance) {
+        try {
+            Employee employee = leaveRequestService.addEmployee(name, team, leaveBalance);
+            return ResponseEntity.ok(employee);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping("/employees")

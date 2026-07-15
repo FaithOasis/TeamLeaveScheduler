@@ -20,6 +20,15 @@ public class LeaveRequestService {
     private final EmployeeRepository employeeRepository;
     private final PublicHolidayRepository publicHolidayRepository;
 
+    @Transactional
+    public Employee addEmployee(String name, Team team, int leaveBalance) {
+        Employee employee = new Employee();
+        employee.setName(name);
+        employee.setTeam(team);
+        employee.setLeaveBalance(leaveBalance);
+        return employeeRepository.save(employee);
+    }
+
     public List<Employee> getAllEmployees() {
         return employeeRepository.findAll();
     }

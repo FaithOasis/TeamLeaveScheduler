@@ -1,7 +1,7 @@
 package com.faithoasiscodes.LeaveRequest;
 
 public enum LeaveType {
-    ANNNUAL,
+    ANNUAL,
     SICK,
     MATERNAL,
     PERSONAL,
