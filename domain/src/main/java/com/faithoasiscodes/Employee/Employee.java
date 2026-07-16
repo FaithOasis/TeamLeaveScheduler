@@ -20,7 +20,6 @@ public class Employee {
     private Long id;
 
     private String name;
-    private int leaveBalance;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

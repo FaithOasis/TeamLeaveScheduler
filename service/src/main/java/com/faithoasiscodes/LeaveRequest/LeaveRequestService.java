@@ -21,11 +21,10 @@ public class LeaveRequestService {
     private final PublicHolidayRepository publicHolidayRepository;
 
     @Transactional
-    public Employee addEmployee(String name, Team team, int leaveBalance) {
+    public Employee addEmployee(String name, Team team) {
         Employee employee = new Employee();
         employee.setName(name);
         employee.setTeam(team);
-        employee.setLeaveBalance(leaveBalance);
         return employeeRepository.save(employee);
     }
 
@@ -42,7 +41,7 @@ public class LeaveRequestService {
     }
 
     @Transactional
-    public LeaveRequest submitLeaveRequest(Long employeeId, LocalDate startDate, LocalDate endDate, LeaveType type) {
+    public LeaveRequest submitLeaveRequest(Long employeeId, LocalDate startDate, LocalDate endDate) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
 
@@ -60,7 +59,6 @@ public class LeaveRequestService {
         request.setStartDate(startDate);
         request.setEndDate(endDate);
         request.setStatus(LeaveStatus.PENDING);
-        request.setType(type);
         request.setCreatedAt(LocalDateTime.now());
         request.setUpdatedAt(LocalDateTime.now());
 
@@ -82,10 +80,9 @@ public class LeaveRequestService {
         Employee employee = request.getEmployee();
         final Team team = employee.getTeam(); // Marked final for lambda safety
 
-        // 30% boundary calculation with rounding down
+        // 30% boundary calculation with rounding down, guaranteeing at least 1 person can take leave
         long totalTeamMembers = employeeRepository.countByTeam(team);
-        int maxAllowedOnLeave = (int) Math.floor(totalTeamMembers * 0.30);
-
+        int maxAllowedOnLeave = Math.max(1, (int) Math.floor(totalTeamMembers * 0.30)); // <-- UPDATED LINE
         // Fetch all approved requests overlapping this request's window
         List<LeaveRequest> activeApprovedLeaves = leaveRequestRepository
                 .findByStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
@@ -117,12 +114,7 @@ public class LeaveRequestService {
             }
         }
 
-        if (employee.getLeaveBalance() < workingDaysToDeduct) {
-            throw new IllegalArgumentException("Insufficient leave balance. Required: " + workingDaysToDeduct + ", Available: " + employee.getLeaveBalance());
-        }
 
-        // Apply deductions & update state
-        employee.setLeaveBalance(employee.getLeaveBalance() - workingDaysToDeduct);
         employeeRepository.save(employee);
 
         request.setStatus(LeaveStatus.APPROVED);

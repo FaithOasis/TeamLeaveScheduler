@@ -2,366 +2,231 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Team Leave Scheduler</title>
-    <style>
-        :root {
-          --border: #d7dbe0;
-          --bg: #f7f8fa;
-          --text: #1f2430;
-          --muted: #6b7280;
-          --weekend: #eef0f3;
-          --holiday: #fdf1d6;
-          --holiday-text: #92620a;
-          --approve: #1a7f37;
-          --reject: #c0392b;
-          --pending: #b58900;
-          --eng: #3b6fd1;
-          --ops: #d1663b;
-          --fin: #4f9d69;
-        }
-        * { box-sizing: border-box; }
-        body {
-          margin: 0;
-          font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-          background: var(--bg);
-          color: var(--text);
-        }
-        header {
-          padding: 16px 24px;
-          border-bottom: 1px solid var(--border);
-          background: #fff;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 12px;
-        }
-        header h1 { font-size: 18px; margin: 0; }
-        main { padding: 24px; max-width: 1200px; margin: 0 auto; }
-
-        section { margin-bottom: 32px; }
-        h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 12px; }
-
-        /* Calendar grid */
-        .cal-grid {
-          display: grid;
-          grid-template-columns: repeat(7, 1fr);
-          gap: 6px;
-        }
-        .cal-day {
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          background: #fff;
-          min-height: 92px;
-          padding: 6px;
-          font-size: 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-        .cal-day.weekend { background: var(--weekend); }
-        .cal-day.holiday { background: var(--holiday); }
-        .cal-date { font-weight: 600; color: var(--muted); }
-        .cal-date .holiday-label { display: block; font-weight: 400; color: var(--holiday-text); font-size: 11px; }
-        .leave-chip {
-          border-radius: 4px;
-          padding: 2px 5px;
-          color: #fff;
-          font-size: 11px;
-          line-height: 1.3;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        .team-ENGINEERING { background: var(--eng); }
-        .team-OPERATIONS  { background: var(--ops); }
-        .team-FINANCE     { background: var(--fin); }
-
-        .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
-        .legend span { display: inline-flex; align-items: center; gap: 6px; }
-        .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-
-        /* Form */
-        form {
-          background: #fff;
-          border: 1px solid var(--border);
-          border-radius: 8px;
-          padding: 16px;
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 12px;
-          align-items: end;
-        }
-        form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
-        input, select, button {
-          font: inherit;
-          padding: 8px;
-          border: 1px solid var(--border);
-          border-radius: 5px;
-        }
-        form button {
-          background: var(--text);
-          color: #fff;
-          border: none;
-          cursor: pointer;
-        }
-        form button:hover { opacity: 0.9; }
-        #form-msg { grid-column: 1 / -1; font-size: 13px; }
-        #form-msg.error { color: var(--reject); }
-        #form-msg.ok { color: var(--approve); }
-
-        /* Pending list */
-        table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-        th, td { text-align: left; padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
-        th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
-        tr:last-child td { border-bottom: none; }
-        .actions button {
-          border: none;
-          border-radius: 4px;
-          color: #fff;
-          padding: 5px 10px;
-          cursor: pointer;
-          font-size: 12px;
-          margin-right: 6px;
-        }
-        .btn-approve { background: var(--approve); }
-        .btn-reject { background: var(--reject); }
-        .status-badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; color: #fff; }
-        .status-PENDING { background: var(--pending); }
-        .status-APPROVED { background: var(--approve); }
-        .status-REJECTED { background: var(--reject); }
-
-        .empty { color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Leave Scheduler Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
-<header>
-    <h1>Team Leave Scheduler</h1>
-    <span id="today-label" style="color: var(--muted); font-size: 13px;"></span>
-</header>
+<div class="max-w-7xl mx-auto p-6 space-y-8">
 
-<main>
-
-    <section>
-        <h2>Next 30 days</h2>
-        <div id="calendar" class="cal-grid"></div>
-        <div class="legend">
-            <span><span class="swatch" style="background: var(--eng);"></span> Engineering</span>
-            <span><span class="swatch" style="background: var(--ops);"></span> Operations</span>
-            <span><span class="swatch" style="background: var(--fin);"></span> Finance</span>
-            <span><span class="swatch" style="background: var(--weekend);"></span> Weekend</span>
-            <span><span class="swatch" style="background: var(--holiday);"></span> Public holiday</span>
+    <header class="bg-white p-6 rounded-xl shadow-xs border border-slate-200 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Team Leave Scheduler</h1>
         </div>
-    </section>
+    </header>
 
-    <section>
-        <h2>Submit a leave request</h2>
-        <form id="leave-form">
-            <label>Employee
-                <select id="employeeId" required></select>
-            </label>
-            <label>Start date
-                <input type="date" id="startDate" required>
-            </label>
-            <label>End date
-                <input type="date" id="endDate" required>
-            </label>
-            <label>Type
-                <select id="leaveType">
-                    <option value="ANNNUAL">Annual</option>
-                    <option value="SICK">Sick</option>
-                    <option value="MATERNAL">Maternal</option>
-                    <option value="PERSONAL">Personal</option>
-                    <option value="OTHER">Other</option>
-                </select>
-            </label>
-            <button type="submit">Submit request</button>
-            <div id="form-msg"></div>
-        </form>
-    </section>
+    <!-- Dynamic Feedback Alert Area -->
+    <div id="alertArea" class="hidden max-w-full p-4 rounded-lg text-sm font-medium"></div>
 
-    <section>
-        <h2>Pending requests</h2>
-        <table>
-            <thead>
-            <tr><th>Employee</th><th>Team</th><th>Dates</th><th>Type</th><th>Status</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="pending-body"></tbody>
-        </table>
-    </section>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-</main>
+        <!-- Left Side: Interactive Request & Operations Panels -->
+        <div class="space-y-6 lg:col-span-1">
 
+            <!-- Submit Leave Request -->
+            <section class="bg-white p-6 rounded-xl shadow-xs border border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Submit Leave Request</h2>
+                <form id="leaveForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 uppercase mb-1">Employee Name</label>
+                        <!-- Swapped input type="number" with a clean dynamic dropdown -->
+                        <select id="employeeId" required class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                            <option value="" disabled selected>Loading staff roster...</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 uppercase mb-1">Start Date</label>
+                            <input type="date" id="startDate" required class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 uppercase mb-1">End Date</label>
+                            <input type="date" id="endDate" required class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-md transition-colors text-sm shadow-xs cursor-pointer">
+                        Submit Request
+                    </button>
+                </form>
+            </section>
+
+            <!-- Approvals Triage Queue -->
+            <section class="bg-white p-6 rounded-xl shadow-xs border border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">Pending Approvals Queue</h2>
+                <div id="pendingQueue" class="space-y-3 max-h-96 overflow-y-auto pr-1">
+                    <!-- Rendered dynamically -->
+                </div>
+            </section>
+        </div>
+
+
+        <div class="lg:col-span-2 space-y-4">
+            <section class="bg-white p-6 rounded-xl shadow-xs border border-slate-200">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold text-slate-900">30-Day Outage Forecast</h2>
+                    <div class="flex items-center gap-4 text-xs text-slate-500">
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></span> Absent</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 bg-slate-100 border border-slate-200 rounded"></span> Full Strength</span>
+                    </div>
+                </div>
+
+                <div id="calendarGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[620px] overflow-y-auto pr-2">
+                    <!-- Rendered dynamically -->
+                </div>
+            </section>
+        </div>
+
+    </div>
+</div>
+
+<!-- UI State Engine Scripts -->
 <script>
-    /* ------------------------------------------------------------------
-       Matches com.faithoasiscodes.LeaveRequest.LeaveRequestController.
-       Note: /submit and /evaluate take query params, not a JSON body.
-       Each LeaveRequest returned by /pending and /approved carries its
-       own nested `employee` object, so no separate lookup is needed
-       for rendering (only the submit-form dropdown needs /employees).
-    ------------------------------------------------------------------- */
-    const API = {
-      employees: '/api/leaves/employees',
-      pending: '/api/leaves/pending',
-      approved: '/api/leaves/approved',
-      submit: '/api/leaves/submit',
-      evaluate: '/api/leaves/evaluate',
-    };
+    const API_BASE = "http://localhost:8080/api/leaves";
 
-    function fmtDate(d) {
-      return d.toISOString().slice(0, 10);
-    }
+    // Setup Event Listeners
+    document.getElementById('leaveForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showAlert('', false);
 
-    async function loadEmployees() {
-      const res = await fetch(API.employees);
-      const employees = await res.json();
+        const params = new URLSearchParams({
+            employeeId: document.getElementById('employeeId').value,
+            startDate: document.getElementById('startDate').value,
+            endDate: document.getElementById('endDate').value
+        });
 
-      const select = document.getElementById('employeeId');
-      select.innerHTML = employees
-        .map(e => `<option value="${e.id}">${e.name} (${e.team})</option>`)
-        .join('');
-    }
+        try {
+            const response = await fetch(`${API_BASE}/submit?${params.toString()}`, { method: 'POST' });
+            if (!response.ok) throw new Error(await response.text());
 
-    async function loadPending() {
-      const res = await fetch(API.pending);
-      return res.json();
-    }
-
-    async function loadApproved() {
-      const res = await fetch(API.approved);
-      return res.json();
-    }
-
-    function buildCalendarDays() {
-      const days = [];
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      for (let i = 0; i < 30; i++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() + i);
-        days.push(d);
-      }
-      return days;
-    }
-
-    function renderCalendar(approved) {
-      const days = buildCalendarDays();
-      const grid = document.getElementById('calendar');
-      grid.innerHTML = '';
-
-      days.forEach(day => {
-        const iso = fmtDate(day);
-        const dow = day.getDay(); // 0 = Sun, 6 = Sat
-        const isWeekend = dow === 0 || dow === 6;
-
-        const cell = document.createElement('div');
-        cell.className = 'cal-day' + (isWeekend ? ' weekend' : '');
-
-        const dateLabel = document.createElement('div');
-        dateLabel.className = 'cal-date';
-        dateLabel.textContent = day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        cell.appendChild(dateLabel);
-
-        approved
-          .filter(r => iso >= r.startDate && iso <= r.endDate)
-          .forEach(r => {
-            const emp = r.employee || {};
-            const chip = document.createElement('div');
-            chip.className = 'leave-chip team-' + (emp.team || 'OTHER');
-            chip.textContent = emp.name || `Employee ${emp.id}`;
-            cell.appendChild(chip);
-          });
-
-        grid.appendChild(cell);
-      });
-    }
-
-    function renderPending(pending) {
-      const body = document.getElementById('pending-body');
-
-      if (pending.length === 0) {
-        body.innerHTML = `<tr><td colspan="6" class="empty">No pending requests</td></tr>`;
-        return;
-      }
-
-      body.innerHTML = pending.map(r => {
-        const emp = r.employee || {};
-        return `
-          <tr data-id="${r.id}">
-            <td>${emp.name || '-'}</td>
-            <td>${emp.team || '-'}</td>
-            <td>${r.startDate} &rarr; ${r.endDate}</td>
-            <td>${r.type || '-'}</td>
-            <td><span class="status-badge status-${r.status}">${r.status}</span></td>
-            <td class="actions">
-              <button class="btn-approve" data-action="approve" data-id="${r.id}">Approve</button>
-              <button class="btn-reject" data-action="reject" data-id="${r.id}">Reject</button>
-            </td>
-          </tr>`;
-      }).join('');
-    }
-
-    async function refreshAll() {
-      const [pending, approved] = await Promise.all([loadPending(), loadApproved()]);
-      renderCalendar(approved);
-      renderPending(pending);
-    }
-
-    document.getElementById('pending-body').addEventListener('click', async (e) => {
-      const btn = e.target.closest('button[data-action]');
-      if (!btn) return;
-      const id = btn.dataset.id;
-      const decision = btn.dataset.action === 'approve' ? 'APPROVED' : 'REJECTED';
-      const params = new URLSearchParams({ requestId: id, decision });
-
-      btn.disabled = true;
-      try {
-        const res = await fetch(`${API.evaluate}?${params.toString()}`, { method: 'POST' });
-        if (!res.ok) throw new Error(await res.text());
-        await refreshAll();
-      } catch (err) {
-        alert('Action failed: ' + err.message);
-        btn.disabled = false;
-      }
-    });
-
-    document.getElementById('leave-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById('form-msg');
-      msg.textContent = '';
-      msg.className = '';
-
-      const params = new URLSearchParams({
-        employeeId: document.getElementById('employeeId').value,
-        startDate: document.getElementById('startDate').value,
-        endDate: document.getElementById('endDate').value,
-        type: document.getElementById('leaveType').value,
-      });
-
-      try {
-        const res = await fetch(`${API.submit}?${params.toString()}`, { method: 'POST' });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || `Request failed (${res.status})`);
+            showAlert('Leave request queued successfully!', false, 'success');
+            document.getElementById('leaveForm').reset();
+            refreshDashboard();
+        } catch (err) {
+            showAlert(`Submission Rejected: ${err.message}`, true);
         }
-        msg.textContent = 'Request submitted.';
-        msg.className = 'ok';
-        e.target.reset();
-        await refreshAll();
-      } catch (err) {
-        msg.textContent = err.message;
-        msg.className = 'error';
-      }
     });
 
-    (async function init() {
-      document.getElementById('today-label').textContent =
-        'Today: ' + new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      await loadEmployees();
-      await refreshAll();
-    })();
-</script>
+    async function evaluateRequest(requestId, decision) {
+        showAlert('', false);
+        const params = new URLSearchParams({ requestId, decision });
 
+        try {
+            const response = await fetch(`${API_BASE}/evaluate?${params.toString()}`, { method: 'POST' });
+            if (!response.ok) throw new Error(await response.text());
+
+            showAlert(`Request successfully ${decision.toLowerCase()}!`, false, 'success');
+            refreshDashboard();
+        } catch (err) {
+            showAlert(`Triage Error: ${err.message}`, true);
+        }
+    }
+
+    // Fetch active roster and dynamically populate the selector with employee names
+    async function loadEmployeeSelector() {
+        const selectEl = document.getElementById('employeeId');
+        try {
+            const res = await fetch(`${API_BASE}/employees`);
+            const employees = await res.json();
+
+            if (employees.length === 0) {
+                selectEl.innerHTML = `<option value="" disabled>No employees found. Please register staff first.</option>`;
+                return;
+            }
+
+            selectEl.innerHTML = '<option value="" disabled selected>Choose Employee Name...</option>' +
+                employees.map(emp => `<option value="${emp.id}">${emp.name} (${emp.team})</option>`).join('');
+        } catch (err) {
+            selectEl.innerHTML = `<option value="" disabled>Error fetching team list.</option>`;
+        }
+    }
+
+    async function loadPendingQueue() {
+        const queueEl = document.getElementById('pendingQueue');
+        try {
+            const res = await fetch(`${API_BASE}/pending`);
+            const requests = await res.json();
+
+            if (requests.length === 0) {
+                queueEl.innerHTML = `<div class="text-sm text-slate-400 py-4 text-center border border-dashed border-slate-200 rounded-lg">No requests awaiting triage.</div>`;
+                return;
+            }
+
+            queueEl.innerHTML = requests.map(req => `
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-2">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <strong class="text-sm text-slate-900">${req.employee.name}</strong>
+                            <p class="text-slate-500">${req.employee.team}</p>
+                        </div>
+                        <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-semibold">${req.type}</span>
+                    </div>
+                    <p class="text-slate-600">📅 ${req.startDate} to ${req.endDate}</p>
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="evaluateRequest(${req.id}, 'APPROVED')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1 rounded transition-colors cursor-pointer">Approve</button>
+                        <button onclick="evaluateRequest(${req.id}, 'REJECTED')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-medium py-1 rounded transition-colors cursor-pointer">Reject</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            queueEl.innerHTML = `<p class="text-xs text-rose-500">Failed to load pending queue.</p>`;
+        }
+    }
+
+    async function loadCalendarGrid() {
+        const gridEl = document.getElementById('calendarGrid');
+        try {
+            const res = await fetch(`${API_BASE}/calendar`);
+            const gridData = await res.json();
+
+            gridEl.innerHTML = Object.entries(gridData).map(([dateStr, employees]) => {
+                const hasAbsences = employees.length > 0;
+                const d = new Date(dateStr);
+                const formattedDate = d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', weekday: 'short' });
+
+                return `
+                    <div class="p-3 rounded-lg border flex flex-col justify-between min-h-24 transition-all ${hasAbsences ? 'bg-blue-50/40 border-blue-200 shadow-2xs' : 'bg-slate-50/50 border-slate-200'}">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-sm text-slate-700">${formattedDate}</span>
+                            ${hasAbsences ? `<span class="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">${employees.length} Out</span>` : ''}
+                        </div>
+                        <div class="space-y-1 flex-1">
+                            ${!hasAbsences ? '<div class="text-xs text-slate-400 italic pt-2">Full team available</div>' :
+                                employees.map(emp => `<div class="text-xs bg-white text-blue-900 border border-blue-200 px-2 py-1 rounded-sm shadow-3xs font-medium">${emp}</div>`).join('')
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (err) {
+            gridEl.innerHTML = `<p class="text-xs text-rose-500">Failed to load forecast grid.</p>`;
+        }
+    }
+
+    function showAlert(msg, isError, type = 'danger') {
+        const el = document.getElementById('alertArea');
+        if (!msg) {
+            el.classList.add('hidden');
+            return;
+        }
+        el.classList.remove('hidden', 'bg-rose-50', 'text-rose-800', 'border-rose-200', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
+
+        if (isError || type === 'danger') {
+            el.classList.add('bg-rose-50', 'text-rose-800', 'border', 'border-rose-200');
+        } else {
+            el.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
+        }
+        el.textContent = msg;
+    }
+
+    function refreshDashboard() {
+        loadEmployeeSelector();
+        loadPendingQueue();
+        loadCalendarGrid();
+    }
+
+    // Initialize App on load
+    refreshDashboard();
+</script>
 </body>
 </html>

@@ -1,6 +1,5 @@
 package com.faithoasiscodes.LeaveRequest;
 
-
 import com.faithoasiscodes.Employee.Employee;
 import com.faithoasiscodes.Employee.Team;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -25,10 +24,9 @@ public class LeaveRequestController {
     @PostMapping("/employees")
     public ResponseEntity<?> addEmployee(
             @RequestParam String name,
-            @RequestParam Team team,
-            @RequestParam(defaultValue = "20") int leaveBalance) {
+            @RequestParam Team team) {
         try {
-            Employee employee = leaveRequestService.addEmployee(name, team, leaveBalance);
+            Employee employee = leaveRequestService.addEmployee(name, team);
             return ResponseEntity.ok(employee);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -59,10 +57,9 @@ public class LeaveRequestController {
     public ResponseEntity<?> submitRequest(
             @RequestParam Long employeeId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam LeaveType type) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         try {
-            LeaveRequest result = leaveRequestService.submitLeaveRequest(employeeId, startDate, endDate, type);
+            LeaveRequest result = leaveRequestService.submitLeaveRequest(employeeId, startDate, endDate);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

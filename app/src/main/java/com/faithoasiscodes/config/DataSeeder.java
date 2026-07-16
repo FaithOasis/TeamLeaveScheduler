@@ -48,7 +48,6 @@ public class DataSeeder implements CommandLineRunner {
                 Employee employee = new Employee();
                 employee.setName(parts[1].trim());
                 employee.setTeam(Team.valueOf(parts[2].trim()));
-                employee.setLeaveBalance(Integer.parseInt(parts[3].trim()));
                 employeeRepository.save(employee);
             }
         }
